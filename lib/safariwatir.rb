@@ -9,7 +9,7 @@ module Watir
     def html
       @scripter.document_html
     end
-    
+
     def text
       @scripter.document_text
     end
@@ -47,12 +47,12 @@ module Watir
         @scripter.highlight(self) do
           click_element
         end
-      end    
+      end
     end
 
     class AlertWindow
       def_init :scripter
-      
+
       def click
         @scripter.click_alert
       end
@@ -114,9 +114,17 @@ module Watir
         @scripter.element_exists?(self)
       end
       alias :exist? :exists?
-      
+
       def name
         self.class.name.split("::").last
+      end
+
+      def focus
+        @scripter.focus(self)
+      end
+
+      def mouse_over
+        @scripter.mouse_over_element(self)
       end
 
       def operate(&block)
@@ -127,7 +135,7 @@ module Watir
         if scripter_suffix.nil?
           raise "SafariWatir does not currently support finding by #{how}"
         end
-        @scripter.send("operate_#{scripter_suffix}", self, &block)        
+        @scripter.send("operate_#{scripter_suffix}", self, &block)
       end
 
       OPERATIONS = {
@@ -140,6 +148,8 @@ module Watir
         :value => "by_input_value",
         :caption => "by_input_value",
         :src => "by_src",
+        # TODO: write the corresponding operate_by_label method in scripter
+        # :label => "by_label",
       }
     end
 
@@ -225,6 +235,10 @@ module Watir
 
     class Label < ContentElement
       def tag; "LABEL"; end
+
+      def target_id
+        @scripter.get_target_for(self)
+      end
     end
 
     class Link < ContentElement

@@ -88,7 +88,7 @@ if (element) {
   
   class AppleScripter # :nodoc:
     include Watir::Exception
-    
+
     attr_reader :js
     attr_accessor :typing_lag
     private :js
@@ -101,13 +101,13 @@ if (element) {
       @app = Appscript.app(@appname)
       @document = @app.documents[1]
     end
-              
+
     def ensure_window_ready
       @app.activate
       @app.make(:new => :document) if @app.documents.get.size == 0
       @document = @app.documents[1]
     end
-    
+
     def url
         @document.URL.get
     end
@@ -146,14 +146,18 @@ if (element) {
       execute(element.operate { %|return element.innerHTML| }, element)
     end
 
-    def operate_by_table_cell(element = @element)      
+    def get_target_for(element = @element)
+      execute(element.operate { %|return element.htmlFor| }, element)
+    end
+
+    def operate_by_table_cell(element = @element)
 %|var element = document;
 if (element == undefined) {
   return '#{TABLE_CELL_NOT_FOUND}';
 }
 #{yield}|
     end
-        
+
     def get_value_for(element = @element)
       execute(element.operate { %|return element.value;| }, element)
     end
@@ -265,6 +269,12 @@ return selected;|
 dispatchOnChange(element);
 element.setSelectionRange(element.value.length, element.value.length);| 
       end, element)
+    end
+
+    def mouse_over_element(element = @element)
+      execute(element.operate { %|
+element.onmouseover();
+      |}, element)
     end
 
     def click_element(element = @element)
@@ -428,6 +438,31 @@ var element = elements[0];|, yield)
       operate_by(element, 'innerText', &block)
     end
 
+    # TODO: Get this working, or get rid of it
+    # this code was from thrashing around. feel free to delete it all
+#     def operate_by_label(element, &block)
+#       # 1) find the label whose text == target
+#       # where does target get set?
+#       # 2) get "for" value from the found label
+#       # 3) find element with same id as the "for" value
+#       # operate_by(element, 'for', &block)
+# # debugger
+#       js.operate(%|
+# // alert('document: '+document.methods);
+# var labels = document.getElementsByTagName('LABEL');
+# alert('Found ' + labels.length + ' labels');
+# var element = undefined;
+# for (var i = 0; i < labels.length; i++) {
+# alert('Looking at label for: '+labels[i].htmlFor);
+#   if (lables[i].innerText == '#{element.what}') {
+#     matching_label = elements[i];
+#     alert("found: "+matching_label);
+#     element = document.getElementById(matching_label.attributes['for']);
+#     break;
+#   }
+# }|, yield)
+#     end
+
     def operate_by(element, attribute)
       js.operate(%|var elements = document.getElementsByTagName('#{element.tag}');
 var element = undefined;
@@ -536,7 +571,7 @@ SCRIPT`
     # Must have "Enable access for assistive devices" checked in System Preferences > Universal Access
     def execute_system_events(script, capture_result = false)
 result = `osascript <<SCRIPT
-tell application "System Events" to tell process "Safari"  
+tell application "System Events" to tell process "Safari"
 	#{script}
 end tell
 SCRIPT`
@@ -546,12 +581,12 @@ SCRIPT`
       end
     end
     
-    def page_load(extra_action = nil)      
+    def page_load(extra_action = nil)
       yield
       sleep 1
-      
+
       tries = 0
-      TIMEOUT.times do |tries|        
+      TIMEOUT.times do |tries|
         if "complete" == eval_js("return DOCUMENT.readyState") && !@document.URL.get.blank?
           sleep 0.4          
           handle_client_redirect
