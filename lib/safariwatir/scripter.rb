@@ -447,30 +447,9 @@ var element = elements[0];|, yield)
       operate_by(element, 'innerText', &block)
     end
 
-    # TODO: Get this working, or get rid of it
-    # this code was from thrashing around. feel free to delete it all
-#     def operate_by_label(element, &block)
-#       # 1) find the label whose text == target
-#       # where does target get set?
-#       # 2) get "for" value from the found label
-#       # 3) find element with same id as the "for" value
-#       # operate_by(element, 'for', &block)
-# # debugger
-#       js.operate(%|
-# // alert('document: '+document.methods);
-# var labels = document.getElementsByTagName('LABEL');
-# alert('Found ' + labels.length + ' labels');
-# var element = undefined;
-# for (var i = 0; i < labels.length; i++) {
-# alert('Looking at label for: '+labels[i].htmlFor);
-#   if (lables[i].innerText == '#{element.what}') {
-#     matching_label = elements[i];
-#     alert("found: "+matching_label);
-#     element = document.getElementById(matching_label.attributes['for']);
-#     break;
-#   }
-# }|, yield)
-#     end
+    def operate_by_label(label, &block)
+      js.operate("var element = document.getElementById('#{label.target_id}');", yield)
+    end
 
     def operate_by(element, attribute)
       js.operate(%|var elements = document.getElementsByTagName('#{element.tag}');
